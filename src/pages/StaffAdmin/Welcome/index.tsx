@@ -1,30 +1,46 @@
-import React, {useEffect, useRef, useState} from 'react';
-import ProCard, {StatisticCard} from '@ant-design/pro-card';
+import React, { useEffect, useRef, useState } from 'react';
+import ProCard, { StatisticCard } from '@ant-design/pro-card';
 import RcResizeObserver from 'rc-resize-observer';
 import styles from './index.less';
-import type {FormInstance} from 'antd';
-import {Button, Col, DatePicker, Divider, Form, message, Radio, Row, Select, Typography,} from 'antd';
-import {connect, history} from 'umi';
-import type {StaffAdminInterface} from '@/services/staffAdmin';
-import type {ConnectProps} from '@@/plugin-dva/connect';
-import type {ConnectState} from '@/models/connect';
-import {Area} from '@ant-design/charts';
-import type {AreaConfig} from '@ant-design/charts/es/plots/area';
-import type {GetTrendParams, SummaryResult, TrendItem} from '@/pages/StaffAdmin/Welcome/service';
-import {GetSummary, GetTrend} from '@/pages/StaffAdmin/Welcome/service';
-import type {CommonResp} from '@/services/common';
+import type { FormInstance } from 'antd';
+import {
+  Button,
+  Col,
+  DatePicker,
+  Divider,
+  Form,
+  message,
+  Radio,
+  Row,
+  Select,
+  Typography,
+} from 'antd';
+import { connect, history } from 'umi';
+import type { StaffAdminInterface } from '@/services/staffAdmin';
+import type { ConnectProps } from '@@/plugin-dva/connect';
+import type { ConnectState } from '@/models/connect';
+import { Area } from '@ant-design/charts';
+import type { AreaConfig } from '@ant-design/charts/es/plots/area';
+import type { GetTrendParams, SummaryResult, TrendItem } from '@/pages/StaffAdmin/Welcome/service';
+import { GetSummary, GetTrend } from '@/pages/StaffAdmin/Welcome/service';
+import type { CommonResp } from '@/services/common';
 import StaffTreeSelect from '@/pages/StaffAdmin/Components/Fields/StaffTreeSelect';
-import type {StaffOption} from '@/pages/StaffAdmin/Components/Modals/StaffTreeSelectionModal';
-import type {SimpleStaffInterface} from '@/services/staff';
-import {QuerySimpleStaffs} from '@/services/staff';
+import type { StaffOption } from '@/pages/StaffAdmin/Components/Modals/StaffTreeSelectionModal';
+import type { SimpleStaffInterface } from '@/services/staff';
+import { QuerySimpleStaffs } from '@/services/staff';
 import moment from 'moment';
 import QrcodeImage from '../../../assets/qrcode.png';
 import ChatImage from '../../../assets/chat.svg';
 import Paragraph from 'antd/es/typography/Paragraph';
-import type {ChartRefConfig} from '@ant-design/charts/es/interface';
-import Icon, {createFromIconfontCN, MessageOutlined, QrcodeOutlined, TagsOutlined} from '@ant-design/icons';
+import type { ChartRefConfig } from '@ant-design/charts/es/interface';
+import Icon, {
+  createFromIconfontCN,
+  MessageOutlined,
+  QrcodeOutlined,
+  TagsOutlined,
+} from '@ant-design/icons';
 import defaultSettings from '../../../../config/defaultSettings';
-import {isImg, isUrl} from '@/utils/utils';
+import { isImg, isUrl } from '@/utils/utils';
 
 export type WelcomeProps = {
   currentStaffAdmin?: StaffAdminInterface;
@@ -48,18 +64,18 @@ const getIcon = (
   if (typeof icon === 'string' && icon !== '') {
     if (isUrl(icon) || isImg(icon)) {
       return (
-        <Icon component={() => <img src={icon} alt='icon' className='ant-pro-sider-menu-icon'/>}/>
+        <Icon component={() => <img src={icon} alt="icon" className="ant-pro-sider-menu-icon" />} />
       );
     }
     if (icon.startsWith(iconPrefixes)) {
-      return <IconFont style={{color: 'rgba(0,0,0,0.65)'}} type={icon}/>;
+      return <IconFont style={{ color: 'rgba(0,0,0,0.65)' }} type={icon} />;
     }
   }
   return icon;
 };
 
 const Welcome: React.FC<WelcomeProps> = (props) => {
-  const {currentStaffAdmin, collapsed} = props;
+  const { currentStaffAdmin, collapsed } = props;
   const [isSmallScreen, setIsSmallScreen] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
   const [mainWidth, setMainWidth] = useState(window.innerWidth);
@@ -131,7 +147,7 @@ const Welcome: React.FC<WelcomeProps> = (props) => {
       },
     },
     areaStyle: function areaStyle() {
-      return {fill: 'l(270) 0:#ffffff 0.5:#c0d4fc 1:#5e91f9'};
+      return { fill: 'l(270) 0:#ffffff 0.5:#c0d4fc 1:#5e91f9' };
     },
   };
 
@@ -147,7 +163,7 @@ const Welcome: React.FC<WelcomeProps> = (props) => {
   };
 
   useEffect(() => {
-    QuerySimpleStaffs({page_size: 5000}).then((res) => {
+    QuerySimpleStaffs({ page_size: 5000 }).then((res) => {
       if (res.code === 0) {
         setAllStaffs(
           res?.data?.items?.map((item: SimpleStaffInterface) => {
@@ -165,30 +181,30 @@ const Welcome: React.FC<WelcomeProps> = (props) => {
 
     GetTrend(formDataTransform(initialValues)).then((res) => {
       if (res.code === 0) {
-        setTrendItems(res?.data || [],
-        );
+        setTrendItems(res?.data || []);
       } else {
         message.error(res.message);
       }
     });
 
-    GetSummary().then((res: CommonResp) => {
-      if (res.code !== 0) {
+    GetSummary()
+      .then((res: CommonResp) => {
+        if (res.code !== 0) {
+          message.error('获取统计数据失败');
+          return;
+        }
+        setSummary(res.data);
+      })
+      .catch((err) => {
+        console.log('err', err);
         message.error('获取统计数据失败');
-        return;
-      }
-      setSummary(res.data);
-    }).catch((err) => {
-      console.log('err', err);
-      message.error('获取统计数据失败');
-    });
-
+      });
   }, []);
 
   return (
     <>
       <RcResizeObserver
-        key='resize-observer'
+        key="resize-observer"
         onResize={(offset) => {
           setMainWidth(offset.width);
           setIsSmallScreen(offset.width <= 576);
@@ -196,17 +212,32 @@ const Welcome: React.FC<WelcomeProps> = (props) => {
         }}
       >
         <ProCard direction={'column'} ghost={true} gutter={8} className={styles.welcomeContainer}>
-          <ProCard.Group ghost={true} wrap={!showSidebar} gutter={8} direction={isSmallScreen ? 'column' : 'row'}>
-            <ProCard ghost={true} wrap={!showSidebar} gutter={8} direction={isSmallScreen ? 'column' : 'row'}>
+          <ProCard.Group
+            ghost={true}
+            wrap={!showSidebar}
+            gutter={8}
+            direction={isSmallScreen ? 'column' : 'row'}
+          >
+            <ProCard
+              ghost={true}
+              wrap={!showSidebar}
+              gutter={8}
+              direction={isSmallScreen ? 'column' : 'row'}
+            >
               <ProCard ghost={true}>
                 <StatisticCard.Group
                   title={
                     <>
                       客户统计
-                      <Divider type={'vertical'}/>
-                      <a className={styles.detailButton} onClick={() => {
-                        history.push('/staff-admin/customer-management/customer');
-                      }}>查看客户</a>
+                      <Divider type={'vertical'} />
+                      <a
+                        className={styles.detailButton}
+                        onClick={() => {
+                          history.push('/staff-admin/customer-management/customer');
+                        }}
+                      >
+                        查看客户
+                      </a>
                     </>
                   }
                   direction={isSmallScreen ? 'column' : 'row'}
@@ -217,14 +248,14 @@ const Welcome: React.FC<WelcomeProps> = (props) => {
                       value: summary?.total_customers_num,
                     }}
                   />
-                  <ProCard.Divider type={isSmallScreen ? 'horizontal' : 'vertical'}/>
+                  <ProCard.Divider type={isSmallScreen ? 'horizontal' : 'vertical'} />
                   <StatisticCard
                     statistic={{
                       title: '今日新增',
                       value: summary?.today_customers_increase,
                     }}
                   />
-                  <ProCard.Divider type={isSmallScreen ? 'horizontal' : 'vertical'}/>
+                  <ProCard.Divider type={isSmallScreen ? 'horizontal' : 'vertical'} />
                   <StatisticCard
                     statistic={{
                       title: '今日流失',
@@ -238,10 +269,15 @@ const Welcome: React.FC<WelcomeProps> = (props) => {
                   title={
                     <>
                       群统计
-                      <Divider type={'vertical'}/>
-                      <a className={styles.detailButton} onClick={() => {
-                        history.push('/staff-admin/group-chat/list');
-                      }}>查看客户群</a>
+                      <Divider type={'vertical'} />
+                      <a
+                        className={styles.detailButton}
+                        onClick={() => {
+                          history.push('/staff-admin/group-chat/list');
+                        }}
+                      >
+                        查看客户群
+                      </a>
                     </>
                   }
                   direction={isSmallScreen ? 'column' : 'row'}
@@ -252,7 +288,7 @@ const Welcome: React.FC<WelcomeProps> = (props) => {
                       value: summary?.total_groups_num,
                     }}
                   />
-                  <ProCard.Divider type={isSmallScreen ? 'horizontal' : 'vertical'}/>
+                  <ProCard.Divider type={isSmallScreen ? 'horizontal' : 'vertical'} />
                   <StatisticCard
                     colSpan={'8'}
                     statistic={{
@@ -260,7 +296,7 @@ const Welcome: React.FC<WelcomeProps> = (props) => {
                       value: summary?.today_groups_increase,
                     }}
                   />
-                  <ProCard.Divider type={isSmallScreen ? 'horizontal' : 'vertical'}/>
+                  <ProCard.Divider type={isSmallScreen ? 'horizontal' : 'vertical'} />
                   <StatisticCard
                     statistic={{
                       title: '今日退群',
@@ -271,9 +307,12 @@ const Welcome: React.FC<WelcomeProps> = (props) => {
               </ProCard>
             </ProCard>
 
-            <ProCard hidden={!showSidebar} colSpan={{
-              lg: '300px',
-            }}>
+            <ProCard
+              hidden={!showSidebar}
+              colSpan={{
+                lg: '300px',
+              }}
+            >
               <div className={styles.staffInfoBox}>
                 <img
                   src={currentStaffAdmin?.avatar_url}
@@ -281,26 +320,24 @@ const Welcome: React.FC<WelcomeProps> = (props) => {
                   alt={currentStaffAdmin?.name}
                 />
                 <div className={styles.textGroup}>
-                  <p className={styles.nickname}>
-                    {currentStaffAdmin?.name}
-                  </p>
+                  <p className={styles.nickname}>{currentStaffAdmin?.name}</p>
                   <p className={styles.role}>{currentStaffAdmin?.role?.name}</p>
                 </div>
               </div>
               <div>
-                <Typography.Paragraph style={{marginBottom: 6}}>
-                  <Typography.Text style={{color: '#6b7a88'}}>企业名称：</Typography.Text>
+                <Typography.Paragraph style={{ marginBottom: 6 }}>
+                  <Typography.Text style={{ color: '#6b7a88' }}>企业名称：</Typography.Text>
                   <Typography.Text>成都小橘科技有限公司</Typography.Text>
                 </Typography.Paragraph>
-                <Typography.Paragraph style={{marginBottom: 0}}>
-                  <Typography.Text style={{color: '#6b7a88'}}>员工总数：</Typography.Text>
-                  <Typography.Text>12</Typography.Text>
+                <Typography.Paragraph style={{ marginBottom: 0 }}>
+                  <Typography.Text style={{ color: '#6b7a88' }}>员工总数：</Typography.Text>
+                  <Typography.Text>{summary?.total_staffs_num ?? '-'}</Typography.Text>
                 </Typography.Paragraph>
               </div>
             </ProCard>
           </ProCard.Group>
 
-          <ProCard.Group ghost={true} gutter={8} style={{marginTop: 12}}>
+          <ProCard.Group ghost={true} gutter={8} style={{ marginTop: 12 }}>
             <ProCard className={styles.trendChartContainer}>
               <div>
                 <Form
@@ -308,23 +345,14 @@ const Welcome: React.FC<WelcomeProps> = (props) => {
                   ref={formRef}
                   initialValues={initialValues}
                   onValuesChange={(changedValues, values) => {
-                    const transformedValues = {...values};
+                    const transformedValues = { ...values };
                     if (changedValues?.date_range_type) {
-                      let date_range = [
-                        moment(),
-                        moment(),
-                      ];
+                      let date_range = [moment(), moment()];
                       if (transformedValues.date_range_type === 'week') {
-                        date_range = [
-                          moment().add(-7, 'd'),
-                          moment(),
-                        ];
+                        date_range = [moment().add(-7, 'd'), moment()];
                       }
                       if (transformedValues.date_range_type === 'month') {
-                        date_range = [
-                          moment().add(-30, 'd'),
-                          moment(),
-                        ];
+                        date_range = [moment().add(-30, 'd'), moment()];
                       }
 
                       formRef.current?.setFieldsValue({
@@ -335,95 +363,92 @@ const Welcome: React.FC<WelcomeProps> = (props) => {
                     }
 
                     const hide = message.loading('加载走势数据');
-                    GetTrend(formDataTransform(transformedValues)).then((res) => {
-                      hide();
-                      if (res.code === 0) {
-                        setTrendItems(res?.data || [],
-                        );
-                      } else {
-                        message.error(res.message);
-                      }
-                    }).catch((err) => {
-                      console.log('err', err);
-                      message.error('走势数据数据加载失败');
-                    });
+                    GetTrend(formDataTransform(transformedValues))
+                      .then((res) => {
+                        hide();
+                        if (res.code === 0) {
+                          setTrendItems(res?.data || []);
+                        } else {
+                          message.error(res.message);
+                        }
+                      })
+                      .catch((err) => {
+                        console.log('err', err);
+                        message.error('走势数据数据加载失败');
+                      });
                   }}
                 >
                   <div>
-                    <Form.Item
-                      name='statistic_type'
-                    >
+                    <Form.Item name="statistic_type">
                       <Radio.Group>
-                        <Radio.Button value='total'>客户总数</Radio.Button>
-                        <Radio.Button value='increase'>新增客户数</Radio.Button>
-                        <Radio.Button value='decrease'>流失客户数</Radio.Button>
-                        <Radio.Button value='net_increase'>净增客户数</Radio.Button>
+                        <Radio.Button value="total">客户总数</Radio.Button>
+                        <Radio.Button value="increase">新增客户数</Radio.Button>
+                        <Radio.Button value="decrease">流失客户数</Radio.Button>
+                        <Radio.Button value="net_increase">净增客户数</Radio.Button>
                       </Radio.Group>
                     </Form.Item>
                   </div>
 
-                  <div style={{display: 'flex'}}>
+                  <div style={{ display: 'flex' }}>
                     <div className={styles.formItemGroup}>
-                      <Form.Item
-                        name='date_range_type'
-                        className={styles.formItem}
-                      >
-                        <Select
-                          style={{width: 100}}
-                        >
-                          <Select.Option value='day'>今日</Select.Option>
-                          <Select.Option value='week'>近一周</Select.Option>
-                          <Select.Option value='month'>近一个月</Select.Option>
+                      <Form.Item name="date_range_type" className={styles.formItem}>
+                        <Select style={{ width: 100 }}>
+                          <Select.Option value="day">今日</Select.Option>
+                          <Select.Option value="week">近一周</Select.Option>
+                          <Select.Option value="month">近一个月</Select.Option>
                         </Select>
                       </Form.Item>
 
-                      <Form.Item
-                        name='date_range'
-                        label={'时段'}
-                        className={styles.formItem}
-                      >
-                        <DatePicker.RangePicker/>
+                      <Form.Item name="date_range" label={'时段'} className={styles.formItem}>
+                        <DatePicker.RangePicker />
                       </Form.Item>
 
                       <Form.Item
-                        name='ext_staff_ids'
+                        name="ext_staff_ids"
                         label={'员工'}
-                        style={{width: 300}}
+                        style={{ width: 300 }}
                         className={styles.formItem}
                       >
-                        <StaffTreeSelect options={allStaffs} maxTagCount={1}/>
+                        <StaffTreeSelect options={allStaffs} maxTagCount={1} />
                       </Form.Item>
-
                     </div>
                     <div>
-                      <Button type='default' onClick={() => {
-                        formRef.current?.resetFields();
-                      }}>
+                      <Button
+                        type="default"
+                        onClick={() => {
+                          formRef.current?.resetFields();
+                        }}
+                      >
                         重置
                       </Button>
                     </div>
                   </div>
-
                 </Form>
 
-                <Area {...chartConfig} className={styles.chartBox}/>
+                <Area {...chartConfig} className={styles.chartBox} />
               </div>
             </ProCard>
 
-            <ProCard.Group hidden={!showSidebar} colSpan={'300px'} style={{padding: '0 4px'}} ghost={true}
-                           direction={'column'}>
-              <ProCard title={<h4 style={{fontSize: 15}}>OpenSCRM开源私域流量管理系统</h4>} bordered={true}
-                       bodyStyle={{paddingTop: 10}}>
+            <ProCard.Group
+              hidden={!showSidebar}
+              colSpan={'300px'}
+              style={{ padding: '0 4px' }}
+              ghost={true}
+              direction={'column'}
+            >
+              <ProCard
+                title={<h4 style={{ fontSize: 15 }}>OpenSCRM开源私域流量管理系统</h4>}
+                bordered={true}
+                bodyStyle={{ paddingTop: 10 }}
+              >
                 <Row gutter={2}>
                   <Col span={12}>
-                    <img src={QrcodeImage} width={100} style={{marginBottom: 12}}/>
+                    <img src={QrcodeImage} width={100} style={{ marginBottom: 12 }} />
                   </Col>
                   <Col span={12}>
-                    <div style={{display: 'flex', flexWrap: 'wrap', justifyContent: 'center'}}>
-                      <Paragraph type={'secondary'}>
-                        遇到任何问题，欢迎联系我们
-                      </Paragraph>
-                      <Paragraph type={'secondary'} style={{marginBottom: 0}}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
+                      <Paragraph type={'secondary'}>遇到任何问题，欢迎联系我们</Paragraph>
+                      <Paragraph type={'secondary'} style={{ marginBottom: 0 }}>
                         微信扫码立即进入交流社群
                       </Paragraph>
                     </div>
@@ -431,45 +456,72 @@ const Welcome: React.FC<WelcomeProps> = (props) => {
                 </Row>
               </ProCard>
 
-              <ProCard title={'消息存档'} bordered={true} style={{marginTop: 8}} bodyStyle={{paddingTop: 12}}>
+              <ProCard
+                title={'消息存档'}
+                bordered={true}
+                style={{ marginTop: 8 }}
+                bodyStyle={{ paddingTop: 12 }}
+              >
                 <Row gutter={2}>
                   <Col span={12}>
-                    <img width={100} src={ChatImage} onClick={() => {
-                      history.push('/staff-admin/corp-risk-control/chat-session');
-                    }}/>
+                    <img
+                      width={100}
+                      src={ChatImage}
+                      onClick={() => {
+                        history.push('/staff-admin/corp-risk-control/chat-session');
+                      }}
+                    />
                   </Col>
                   <Col span={12}>
-                    <div style={{display: 'flex', flexWrap: 'wrap', justifyContent: 'end'}}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'end' }}>
                       <Paragraph type={'secondary'}>轻松了解员工和客户的沟通过程</Paragraph>
-                      <Button type={'primary'} onClick={() => {
-                        history.push('/staff-admin/corp-risk-control/chat-session');
-                      }}>立即使用</Button>
+                      <Button
+                        type={'primary'}
+                        onClick={() => {
+                          history.push('/staff-admin/corp-risk-control/chat-session');
+                        }}
+                      >
+                        立即使用
+                      </Button>
                     </div>
                   </Col>
                 </Row>
               </ProCard>
 
-              <ProCard title={'入门指引'} bordered={true} style={{marginTop: 8}} bodyStyle={{paddingTop: 10}}>
+              <ProCard
+                title={'入门指引'}
+                bordered={true}
+                style={{ marginTop: 8 }}
+                bodyStyle={{ paddingTop: 10 }}
+              >
                 <div className={styles.guideContainer}>
                   <div className={styles.item}>
-                    文档中心 <Button size={'small'} target={'_blank'} href={'https://github.com/openscrm/api-server/wiki'}
-                                 type={'dashed'}>查看</Button>
+                    文档中心{' '}
+                    <Button
+                      size={'small'}
+                      target={'_blank'}
+                      href={'https://github.com/openscrm/api-server/wiki'}
+                      type={'dashed'}
+                    >
+                      查看
+                    </Button>
                   </div>
                 </div>
               </ProCard>
-
             </ProCard.Group>
           </ProCard.Group>
 
-          <ProCard.Group ghost={true} gutter={8} style={{marginTop: 12}}>
-            <ProCard title={'常用功能'} bordered={true} bodyStyle={{paddingTop: 6}}>
+          <ProCard.Group ghost={true} gutter={8} style={{ marginTop: 12 }}>
+            <ProCard title={'常用功能'} bordered={true} bodyStyle={{ paddingTop: 6 }}>
               <div className={styles.quickLinkContainer}>
-
-                <a className={styles.item} onClick={() => {
-                  history.push('/staff-admin/customer-growth/contact-way')
-                }}>
+                <a
+                  className={styles.item}
+                  onClick={() => {
+                    history.push('/staff-admin/customer-growth/contact-way');
+                  }}
+                >
                   <div className={styles.icon}>
-                    {getIcon(<QrcodeOutlined style={{color: 'rgba(0,0,0,0.65)'}}/>)}
+                    {getIcon(<QrcodeOutlined style={{ color: 'rgba(0,0,0,0.65)' }} />)}
                   </div>
                   <div className={styles.textGroup}>
                     <p className={styles.title}>渠道活码</p>
@@ -477,23 +529,27 @@ const Welcome: React.FC<WelcomeProps> = (props) => {
                   </div>
                 </a>
 
-                <a className={styles.item} onClick={() => {
-                  history.push('/staff-admin/customer-conversion/customer-mass-msg')
-                }}>
-                  <div className={styles.icon}>
-                    {getIcon('icon-fasong')}
-                  </div>
+                <a
+                  className={styles.item}
+                  onClick={() => {
+                    history.push('/staff-admin/customer-conversion/customer-mass-msg');
+                  }}
+                >
+                  <div className={styles.icon}>{getIcon('icon-fasong')}</div>
                   <div className={styles.textGroup}>
                     <p className={styles.title}>客户群发</p>
                     <p className={styles.desc}>强大的定向群发，最小打扰，最优效果</p>
                   </div>
                 </a>
 
-                <a className={styles.item} onClick={() => {
-                  history.push('/staff-admin/corp-risk-control/chat-session')
-                }}>
+                <a
+                  className={styles.item}
+                  onClick={() => {
+                    history.push('/staff-admin/corp-risk-control/chat-session');
+                  }}
+                >
                   <div className={styles.icon}>
-                    {getIcon(<MessageOutlined style={{color: 'rgba(0,0,0,0.65)'}} />)}
+                    {getIcon(<MessageOutlined style={{ color: 'rgba(0,0,0,0.65)' }} />)}
                   </div>
                   <div className={styles.textGroup}>
                     <p className={styles.title}>消息存档</p>
@@ -501,33 +557,30 @@ const Welcome: React.FC<WelcomeProps> = (props) => {
                   </div>
                 </a>
 
-                <a className={styles.item} onClick={() => {
-                  history.push('/staff-admin/customer-management/customer-tag')
-                }}>
+                <a
+                  className={styles.item}
+                  onClick={() => {
+                    history.push('/staff-admin/customer-management/customer-tag');
+                  }}
+                >
                   <div className={styles.icon}>
-                    {getIcon(<TagsOutlined style={{color: 'rgba(0,0,0,0.65)'}} />)}
+                    {getIcon(<TagsOutlined style={{ color: 'rgba(0,0,0,0.65)' }} />)}
                   </div>
                   <div className={styles.textGroup}>
                     <p className={styles.title}>客户标签</p>
                     <p className={styles.desc}>集中高效管理客户标签，支撑私域精准运营</p>
                   </div>
                 </a>
-
               </div>
             </ProCard>
-
           </ProCard.Group>
-
-
         </ProCard>
-
       </RcResizeObserver>
-
     </>
   );
 };
 
-export default connect(({staffAdmin, global}: ConnectState) => ({
+export default connect(({ staffAdmin, global }: ConnectState) => ({
   currentStaffAdmin: staffAdmin.currentStaffAdmin,
   collapsed: global.collapsed,
 }))(Welcome);

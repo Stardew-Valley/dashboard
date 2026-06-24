@@ -6,7 +6,7 @@ import { CaretDownFilled, FolderFilled } from '@ant-design/icons';
 import type { DataNode } from 'rc-tree/lib/interface';
 import type { ReactNode } from 'react';
 import type { DepartmentInterface } from '@/services/department';
-import styles from '../index.less'
+import styles from '../index.less';
 import _ from 'lodash';
 
 export type DepartmentTreeProps = {
@@ -34,8 +34,8 @@ export interface TreeNode {
 const buildDepartmentTree = (
   items: DepartmentList.Item[],
 ): { nodes: TreeNode[]; tree: TreeNode[] } => {
-  let nodes: TreeNode[] = []; // 一维节点
-  let tree: TreeNode[] = []; // 树形节点
+  let nodes: TreeNode[] = [];
+  let tree: TreeNode[] = [];
   items.forEach((department) => {
     nodes.push({
       title: department.name,
@@ -45,7 +45,7 @@ const buildDepartmentTree = (
       checkable: true,
       selectable: false,
       order: department.order,
-      staff_num: department.staff_num
+      staff_num: department.staff_num,
     });
     if (department?.sub_departments) {
       department?.sub_departments.forEach((subDepartment: any) => {
@@ -57,23 +57,20 @@ const buildDepartmentTree = (
           checkable: true,
           selectable: false,
           order: department.order,
-          staff_num: department.staff_num
+          staff_num: department.staff_num,
         });
       });
     }
   });
 
-  // 排序原始nodes，group在前，node在后
   nodes = nodes.sort((a, b) => {
     return a?.order - b?.order;
   });
 
-  const nodesByKey = _.keyBy(nodes, 'key'); // 去重
-
-  nodes = _.toArray<TreeNode>(nodesByKey); // 设置一维节点
+  const nodesByKey = _.keyBy(nodes, 'key');
+  nodes = _.toArray<TreeNode>(nodesByKey);
 
   const groupedNodes = _.groupBy(nodesByKey, 'parentKey');
-  // 组装node
   _.each(_.omit(groupedNodes, `0`), (children, parentKey) => {
     if (nodesByKey[parentKey]) {
       nodesByKey[parentKey].children = children || [];
@@ -81,7 +78,6 @@ const buildDepartmentTree = (
   });
 
   tree = _.toArray<TreeNode>(nodesByKey);
-  // 清除顶层的冗余node
   tree = tree.filter((item) => {
     return item.parentKey === `0`;
   });
@@ -91,11 +87,12 @@ const buildDepartmentTree = (
     tree,
   };
 };
-const DepartMentTreeComp = ({ callback }: { callback: (selectedkey: string) => void }) => {
+
+const DepartMentTreeComp = ({ callback }: { callback: (selectedKeys: string[]) => void }) => {
   const [allDepartments, setAllDepartments] = useState<DepartmentList.Item[]>([]);
   const [departments, setDepartments] = useState<DepartmentOption[]>([]);
-  const [departmentNodes, setDepartmentNodes] = useState<TreeNode[]>([]); // 一维的节点
-  const [departmentTree, setDepartmentTree] = useState<TreeNode[]>([]); // 多维的树节点
+  const [departmentNodes, setDepartmentNodes] = useState<TreeNode[]>([]);
+  const [departmentTree, setDepartmentTree] = useState<TreeNode[]>([]);
   const [selectedDepartments, setSelectedDepartments] = useState<DepartmentOption[]>([]);
   const [keyword] = useState<string>('');
   const [expandAll, setExpandAll] = useState<boolean>(false);
@@ -116,28 +113,32 @@ const DepartMentTreeComp = ({ callback }: { callback: (selectedkey: string) => v
       });
   }, []);
 
+  const toggleDepartment = (key: string) => {
+    const newKeys = checkedNodeKeys.includes(key)
+      ? checkedNodeKeys.filter((k) => k !== key)
+      : [...checkedNodeKeys, key];
+    const items = newKeys.map((k) => allDepartmentMap[Number(k)]).filter(Boolean);
+    setSelectedDepartments(items as DepartmentOption[]);
+    callback(newKeys);
+  };
+
   const onNodesCheck = (checked: { checked: string[]; halfChecked: string[] }) => {
     const checkedExtDepartmentIDs: number[] = [];
     let selectedExtDepartmentIDs = selectedDepartments.map((item) => item.ext_id);
     let checkedKeys = [...checked.checked];
 
-    // 找出本次uncheck的key，根据这些key的ext_id去删除相关checkedKey
     const uncheckedKeys = _.difference(checkedNodeKeys, checkedKeys);
     _.forEach<string>(uncheckedKeys, (key: string) => {
-      // @ts-ignore
       checkedKeys = checkedKeys.filter<string>((checkedKey) => {
         return !checkedKey.includes(key);
       });
     });
 
-    // 记录当前所有checked的key
     checkedKeys.forEach((key) => {
       checkedExtDepartmentIDs.push(Number(key));
       selectedExtDepartmentIDs.push(Number(key));
     });
 
-    // 计算需要删除的extDepartmentID
-    // @ts-ignore
     const shouldDeleteExtDepartmentIDs = _.difference(
       _.map(departments, 'ext_id'),
       checkedExtDepartmentIDs,
@@ -151,18 +152,22 @@ const DepartMentTreeComp = ({ callback }: { callback: (selectedkey: string) => v
       return allDepartmentMap[selectedExtDepartmentID];
     });
 
-    // @ts-ignore
-    setSelectedDepartments(items);
+    setSelectedDepartments(items as DepartmentOption[]);
+    callback(selectedExtDepartmentIDs.map(String));
   };
 
   const nodeRender = (node: DataNode): ReactNode => {
     return (
       <div
         onClick={() => {
-          // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-          callback && callback(String(node.key))
+          toggleDepartment(String(node.key));
         }}
-        style={{ padding: '4px 6px', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow:'ellipsis'}}
+        style={{
+          padding: '4px 6px',
+          overflow: 'hidden',
+          whiteSpace: 'nowrap',
+          textOverflow: 'ellipsis',
+        }}
       >
         <FolderFilled
           style={{
@@ -173,20 +178,19 @@ const DepartMentTreeComp = ({ callback }: { callback: (selectedkey: string) => v
           }}
         />
         <span>
-          {/* node.title */}
-          {
-            // @ts-ignore
-            node.title.length>14? <span>{node.title.slice(0,13)}...</span>:<span>{node.title}</span>
-          }
+          {node.title.length > 14 ? (
+            <span>{node.title.slice(0, 13)}...</span>
+          ) : (
+            <span>{node.title}</span>
+          )}
           ({node.staff_num})
         </span>
       </div>
     );
   };
-  // 监听选中部门变化，计算checked的树节点
+
   useEffect(() => {
     const allDepartmentNodeKeys = _.map(departmentNodes, 'key');
-    // 计算当前选中的部门，命中的key
     const matchedKeys: string[] = [];
     allDepartmentNodeKeys.forEach((key: string) => {
       selectedDepartments.forEach((department) => {
@@ -198,15 +202,12 @@ const DepartMentTreeComp = ({ callback }: { callback: (selectedkey: string) => v
     setCheckedNodeKeys(matchedKeys);
   }, [selectedDepartments]);
 
-  // 关键词变化的时候
   useEffect(() => {
     const filteredDepartments = allDepartments.filter((item) => {
       return keyword === '' || item.label.includes(keyword);
     });
-    // @ts-ignore
     setDepartments(filteredDepartments);
     const { nodes, tree } = buildDepartmentTree(filteredDepartments);
-    // 这里同步更新node节点和选中key值
     let checkedKeys: string[] = [];
     nodes.forEach((node) => {
       selectedDepartments.forEach((department) => {
@@ -222,7 +223,7 @@ const DepartMentTreeComp = ({ callback }: { callback: (selectedkey: string) => v
   }, [allDepartments, keyword]);
 
   return (
-    <div >
+    <div>
       <div className={styles.header}>
         <span className={styles.departmentTitle}>部门信息</span>
         <a
@@ -246,7 +247,6 @@ const DepartMentTreeComp = ({ callback }: { callback: (selectedkey: string) => v
           checkStrictly={true}
           checkedKeys={checkedNodeKeys}
           expandedKeys={expandedNodeKeys}
-          // @ts-ignore
           onExpand={(expandedKeys: string[]) => {
             setExpandedNodeKeys(expandedKeys);
           }}
@@ -254,7 +254,6 @@ const DepartMentTreeComp = ({ callback }: { callback: (selectedkey: string) => v
           switcherIcon={<CaretDownFilled style={{ color: '#47a7ff' }} />}
           multiple={true}
           treeData={departmentTree}
-          // @ts-ignore
           onCheck={onNodesCheck}
           titleRender={nodeRender}
         />
